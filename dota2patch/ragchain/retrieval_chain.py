@@ -2,6 +2,7 @@ from langchain.prompts import PromptTemplate
 
 from langchain.chains import RetrievalQA
 
+
 class RetrievalChain:
     def __init__(self, llm_client):
         self.llm_client = llm_client
@@ -15,7 +16,7 @@ You must answer based **ONLY** on the provided context.
 If you don't know the answer or the context doesn't contain the answer, just say "I'm sorry, I cannot answer this question based on the provided patch notes."
 Do not make up an answer or use any external knowledge.
 
-Include the patch name from the metadata to the responses enclosed in parentheses. If not known, no need to put the patch name.
+Include the patch from the metadata to the responses. If not known, no need to put the patch. Order the response based on patch from latest to earliest.
 
 CONTEXT:
 {context}
@@ -25,15 +26,16 @@ QUESTION: {question}
 ANSWER (based ONLY on the context):"""
 
         custom_prompt = PromptTemplate(
-            template=prompt_template_str, input_variables=["context", "question"]
+            template=prompt_template_str, input_variables=[
+                "context", "question"]
         )
 
         return RetrievalQA.from_chain_type(
             llm=self.llm_client,
-            chain_type="stuff", # "stuff" puts all retrieved docs into the prompt.
-                                # Other types: "map_reduce", "refine", "map_rerank"
+            # "stuff" puts all retrieved docs into the prompt.
+            chain_type="stuff",
+            # Other types: "map_reduce", "refine", "map_rerank"
             retriever=retriever,
             return_source_documents=True,
             chain_type_kwargs={"prompt": custom_prompt},
-)
-
+        )

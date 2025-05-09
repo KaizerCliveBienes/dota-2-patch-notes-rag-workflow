@@ -1,10 +1,8 @@
-import json
-from functools import reduce
-
 class ParsePatchHeroes:
     def __init__(self, hero_raw_data, ability_raw_data):
         self.heroes_mapping = self.construct_hero_mapping(hero_raw_data)
-        self.abilities_mapping = self.construct_ability_mapping(ability_raw_data)
+        self.abilities_mapping = self.construct_ability_mapping(
+            ability_raw_data)
 
     def construct_hero_mapping(self, raw_data):
         item_abilities = raw_data['result']['data']['heroes']
@@ -17,7 +15,7 @@ class ParsePatchHeroes:
         abilities = raw_data['result']['data']['itemabilities']
         ability_mapping = {}
         for ability in abilities:
-            ability_mapping[ability['id']] = ability['name_loc'] 
+            ability_mapping[ability['id']] = ability['name_loc']
 
         return ability_mapping
 
@@ -36,12 +34,14 @@ class ParsePatchHeroes:
                     'changes': ' '.join(note['note'] + ('(' + note['info'] + ')' if 'info' in note else '') + '.' for note in ability['ability_notes']),
                     'title': self.heroes_mapping[hero_note['hero_id']] if hero_note['hero_id'] in self.heroes_mapping else '',
                 })
-            
+
         if 'subsections' in hero_note:
             for subsection in hero_note['subsections']:
                 if 'facet' in subsection:
-                    abilities = subsection['abilities'] if 'abilities' in subsection else []
-                    changes = ' '.join(note['note'] + ('(' + note['info'] + ')' if 'info' in note else '') + '.' for note in (subsection['general_notes'] if 'general_notes' in subsection else []))
+                    abilities = subsection['abilities'] if 'abilities' in subsection else [
+                    ]
+                    changes = ' '.join(note['note'] + ('(' + note['info'] + ')' if 'info' in note else '') +
+                                       '.' for note in (subsection['general_notes'] if 'general_notes' in subsection else []))
 
                     hero_updates.append({
                         'patch_metadata': patch_metadata,

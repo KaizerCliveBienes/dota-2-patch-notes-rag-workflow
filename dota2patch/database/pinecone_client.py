@@ -1,8 +1,9 @@
 from langchain_pinecone import Pinecone as LangchainPinecone
-from pinecone import Pinecone, ServerlessSpec
+from pinecone import ServerlessSpec
 from langchain.chains.query_constructor.schema import AttributeInfo
 from langchain.retrievers.self_query.base import SelfQueryRetriever
-from langchain_openai import ChatOpenAI
+import time
+
 
 class PineconeClient:
     def __init__(self, pinecone_client, embeddings_client, llm_client):
@@ -19,24 +20,37 @@ class PineconeClient:
             print(f"Creating Pinecone index: {self.pinecone_index_name}")
             self.pinecone_client.create_index(
                 name=self.pinecone_index_name,
-                dimension=self.embedding_dimensions, # Dimension of OpenAI's text-embedding-ada-002 or text-embedding-3-small
+                # Dimension of OpenAI's text-embedding-ada-002 or text-embedding-3-small
+                dimension=self.embedding_dimensions,
                 metric="cosine",      # Common metric for semantic similarity
                 spec=ServerlessSpec(
                     cloud="aws",
                     region="us-east-1"
                 )
             )
+
+            print(f"Waiting for index '{
+                  self.pinecone_index_name}' to become ready...")
+            # Use describe_index to poll for readiness status
+            while not self.pinecone_client.describe_index(self.pinecone_index_name).status['ready']:
+                time.sleep(1)
+                print(f"Waiting for index {
+                      self.pinecone_index_name} to be ready")
             print(f"Index {self.pinecone_index_name} created successfully.")
         else:
             print(f"Pinecone index {self.pinecone_index_name} already exists.")
 
+        try:
+            vector_store = LangchainPinecone.from_existing_index(
+                index_name=self.pinecone_index_name,
+                embedding=self.embeddings_client,
+                namespace="dota2-patches-v1"
+            )
+        except Exception as e:
+            raise RuntimeError(f"Cannot connect to langchain index: {e}")
 
-        vector_store = LangchainPinecone.from_documents(
-            documents=all_patch_documents,
-            embedding=self.embeddings_client,
-            index_name=self.pinecone_index_name,
-            namespace="dota2-patches-v1"
-        )
+        for document in all_patch_documents:
+            vector_store.add_documents(documents=document)
 
         print("Documents embedded and loaded into Pinecone.")
 
@@ -45,7 +59,7 @@ class PineconeClient:
     def retrieve(self, vector_store):
         retriever = vector_store.as_retriever(
             search_kwargs={
-                'k': 3, # Number of documents to retrieve
+                'k': 3,  # Number of documents to retrieve
                 # Example filter:
                 # 'filter': {'type': 'heroes', 'patch_number': '7.38c'}
             }
@@ -54,7 +68,8 @@ class PineconeClient:
         return retriever
 
     def get_vector_store(self):
-        print(f"Connecting to existing Pinecone index: {self.pinecone_index_name}")
+        print(f"Connecting to existing Pinecone index: {
+              self.pinecone_index_name}")
         vector_store = LangchainPinecone(
             index_name=self.pinecone_index_name,
             embedding=self.embeddings_client,
@@ -92,7 +107,7 @@ class PineconeClient:
                 name="title", description="The name of the hero or item. The format is <hero or item name> (<code name>).", type="string"
             ),
         ]
-        
+
         document_content_description = "Patch notes from the game, Dota 2"
 
         return SelfQueryRetriever.from_llm(
@@ -101,4 +116,3 @@ class PineconeClient:
             document_content_description,
             metadata_field_info,
         )
-
