@@ -1,5 +1,6 @@
 from langchain.docstore.document import Document
 
+
 class ProcessData:
     def load_and_process_data(self, json_data):
         documents = []
@@ -10,7 +11,10 @@ class ProcessData:
             if metadata is None:
                 continue
 
-            documents.append(Document(page_content=page_content, metadata=metadata))
+            documents.append(
+                Document(
+                    page_content=page_content,
+                    metadata=metadata))
 
         return documents
 
@@ -24,16 +28,22 @@ class ProcessData:
                 if metadata is None:
                     continue
 
-                documents.append(Document(page_content=page_content, metadata=metadata))
+                documents.append(
+                    Document(
+                        page_content=page_content,
+                        metadata=metadata))
 
         return documents
 
     def construct_page_content(self, entry):
-        return "Change in patch_number: \"" + entry.get("patch_metadata", {}).get("patch_name", "") + "\" for " + entry.get("type") + ("(" + entry.get("subtype") + ")" if 'subtype' in entry else "") + ": " + entry.get("title") + ' - ' + (entry["skill_name"] if "skill_name" in entry else '') + ' - '+ entry.get("changes")
+        return "Change in patch_number: \"" + entry.get("patch_metadata", {}).get("patch_name", "") + "\" for " + entry.get("type") + ("(" + entry.get(
+            "subtype") + ")" if 'subtype' in entry else "") + ": " + entry.get("title") + ' - ' + (entry["skill_name"] if "skill_name" in entry else '') + ' - ' + entry.get("changes")
 
     def process_metadata(self, entry, page_content):
         if not page_content:
-            print(f"Skipping entry due to missing 'changes' field: {entry.get('title')}")
+            print(
+                f"Skipping entry due to missing 'changes' field: {
+                    entry.get('title')}")
             return None
 
         metadata = {
@@ -42,10 +52,10 @@ class ProcessData:
             "type": entry.get("type", "N/A"),
             "subtype": entry.get("subtype", "N/A"),
             "title": entry.get("title", "N/A"),
-            "original_change_text": page_content # Storing the original text is good practice
+            # Storing the original text is good practice
+            "original_change_text": page_content
         }
         if "skill_name" in entry:
             metadata["skill_name"] = entry["skill_name"]
 
         return metadata
-

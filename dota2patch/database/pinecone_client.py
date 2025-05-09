@@ -20,7 +20,8 @@ class PineconeClient:
             print(f"Creating Pinecone index: {self.pinecone_index_name}")
             self.pinecone_client.create_index(
                 name=self.pinecone_index_name,
-                # Dimension of OpenAI's text-embedding-ada-002 or text-embedding-3-small
+                # Dimension of OpenAI's text-embedding-ada-002 or
+                # text-embedding-3-small
                 dimension=self.embedding_dimensions,
                 metric="cosine",      # Common metric for semantic similarity
                 spec=ServerlessSpec(
@@ -32,7 +33,8 @@ class PineconeClient:
             print(f"Waiting for index '{
                   self.pinecone_index_name}' to become ready...")
             # Use describe_index to poll for readiness status
-            while not self.pinecone_client.describe_index(self.pinecone_index_name).status['ready']:
+            while not self.pinecone_client.describe_index(
+                    self.pinecone_index_name).status['ready']:
                 time.sleep(1)
                 print(f"Waiting for index {
                       self.pinecone_index_name} to be ready")

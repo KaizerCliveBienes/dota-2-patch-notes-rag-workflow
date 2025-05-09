@@ -18,7 +18,8 @@ class ChatQuery:
         if metadata_filter:
             print(f"With filter: {metadata_filter}")
 
-        result = self.qa_chain.invoke({"query": query}) # Langchain LCEL uses invoke
+        # Langchain LCEL uses invoke
+        result = self.qa_chain.invoke({"query": query})
         print("\nAnswer:")
         print(result["result"])
         print("\nSource Documents:")

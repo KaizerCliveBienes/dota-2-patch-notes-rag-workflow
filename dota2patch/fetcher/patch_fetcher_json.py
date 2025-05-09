@@ -17,7 +17,7 @@ class PatchFetcher():
         data = None
 
         if url.startswith('https://www.dota2.com/datafeed/patchnotes'):
-            data =  """{
+            data = """{
   "patch_number": "7.38c",
   "patch_name": "7.38c",
   "patch_timestamp": 1743058800,
@@ -1700,7 +1700,7 @@ class PatchFetcher():
 }"""
 
         if url.startswith('https://www.dota2.com/datafeed/itemlist'):
-            data =  """{
+            data = """{
   "result": {
     "data": {
       "itemabilities": [
@@ -8126,7 +8126,7 @@ class PatchFetcher():
 }"""
 
         if url.startswith('https://www.dota2.com/datafeed/herolist'):
-            data =  """{
+            data = """{
   "result": {
     "data": {
       "heroes": [
@@ -9143,7 +9143,7 @@ class PatchFetcher():
   }
 }"""
         if url.startswith('https://www.dota2.com/datafeed/abilitylist'):
-            data =  """{
+            data = """{
   "result": {
     "data": {
       "itemabilities": [
@@ -38347,4 +38347,3 @@ class PatchFetcher():
 }"""
 
         return json.loads(data)
-

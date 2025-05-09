@@ -25,7 +25,7 @@ def continually_query_user(chat_query):
         try:
             user_input = input("> ")
 
-            if user_input.strip(): # Check if the input is not just whitespace
+            if user_input.strip():  # Check if the input is not just whitespace
                 print(f"You entered: '{user_input}'")
                 chat_query.ask_question(user_input)
             else:
@@ -41,31 +41,42 @@ def continually_query_user(chat_query):
         except Exception as e:
             print(f"An error occurred: {e}")
 
+
 @click.command()
-@click.option('--insert', default=False, help='Flag to insert vector embeddings into pinecone')
-@click.option('--patch-version', default='', help='Patch version to insert. Must be with --insert')
+@click.option('--insert', default=False,
+              help='Flag to insert vector embeddings into pinecone')
+@click.option('--patch-version', default='',
+              help='Patch version to insert. Must be with --insert')
 def get_data(insert, patch_version):
     if (insert and patch_version == ''):
-        raise RuntimeError("must include patch version (--patch-version) if you are going to insert something.")
+        raise RuntimeError(
+            "must include patch version (--patch-version) if you are going to insert something.")
 
     patch_fetcher = PatchFetcher()
 
-    llm_client = ChatOpenAI(openai_api_key=os.environ.get("OPENAI_API_KEY"), model_name="gpt-4.1-mini",temperature=0)
+    llm_client = ChatOpenAI(
+        openai_api_key=os.environ.get("OPENAI_API_KEY"),
+        model_name="gpt-4.1-mini",
+        temperature=0)
 
     pinecone_instance = PineconeClient(
         Pinecone(api_key=os.environ.get("PINECONE_API_KEY")),
-        OpenAIEmbeddings(openai_api_key=os.environ.get("OPENAI_API_KEY"), model="text-embedding-3-small"),
+        OpenAIEmbeddings(
+            openai_api_key=os.environ.get("OPENAI_API_KEY"),
+            model="text-embedding-3-small"),
         llm_client,
     )
 
     vector_store = None
     if insert:
-        vector_store = pinecone_instance.insert(patch_fetcher.construct_all_patch_documents(patch_version))
+        vector_store = pinecone_instance.insert(
+            patch_fetcher.construct_all_patch_documents(patch_version))
     else:
         vector_store = pinecone_instance.get_vector_store()
 
     # retriever = pinecone_instance.retrieve(vector_store)
-    retriever = pinecone_instance.get_retriever_from_self_query_retriever(vector_store)
+    retriever = pinecone_instance.get_retriever_from_self_query_retriever(
+        vector_store)
 
     retrieval_chain = RetrievalChain(llm_client)
     qa_chain = retrieval_chain.get_qa_chain(retriever)
