@@ -26,30 +26,54 @@ class ParsePatchHeroes:
         hero_updates = []
         if 'abilities' in hero_note:
             for ability in hero_note['abilities']:
+                changes = [
+                    f"{note['note']}{
+                        f'({note['info']})' if 'info' in note else ''}."
+                    for note in ability['ability_notes']
+                ]
+
+                title = self.heroes_mapping.get(hero_note['hero_id'], '')
+
+                skill_name = self.abilities_mapping.get(
+                    ability['ability_id'], '')
+
                 hero_updates.append({
                     'patch_metadata': patch_metadata,
                     'type': 'heroes',
                     'subtype': 'abilities',
-                    'skill_name': self.abilities_mapping[ability['ability_id']],
-                    'changes': ' '.join(note['note'] + ('(' + note['info'] + ')' if 'info' in note else '') + '.' for note in ability['ability_notes']),
-                    'title': self.heroes_mapping[hero_note['hero_id']] if hero_note['hero_id'] in self.heroes_mapping else '',
+                    'skill_name': skill_name,
+                    'changes': ' '.join(changes),
+                    'title': title,
                 })
 
         if 'subsections' in hero_note:
             for subsection in hero_note['subsections']:
                 if 'facet' in subsection:
-                    abilities = subsection['abilities'] if 'abilities' in subsection else [
+                    abilities = subsection.get('abilities', [])
+                    changes = [
+                        f"{note['note']}{
+                            f'({note['info']})' if 'info' in note else ''}."
+                        for note in subsection.get('general_notes', [])
                     ]
-                    changes = ' '.join(note['note'] + ('(' + note['info'] + ')' if 'info' in note else '') +
-                                       '.' for note in (subsection['general_notes'] if 'general_notes' in subsection else []))
+
+                    ability_changes = [
+                        f"{self.abilities_mapping.get(
+                            ability['ability_id'], '')}:{note['note']}{
+                            f'({note['info']})' if 'info' in note else ''}"
+                        for ability in abilities for note in ability.get(
+                            'ability_notes', [])
+                    ]
+
+                    title = self.heroes_mapping.get(hero_note['hero_id'], '')
 
                     hero_updates.append({
                         'patch_metadata': patch_metadata,
                         'type': 'heroes',
                         'subtype': 'facets',
                         'skill_name': subsection['title'],
-                        'changes': changes if changes else ' '.join(self.abilities_mapping[ability['ability_id']] + ': ' + note['note'] + ('(' + note['info'] + ')' if 'info' in note else '') + '.' for ability in abilities for note in ability['ability_notes']),
-                        'title': self.heroes_mapping[hero_note['hero_id']] if hero_note['hero_id'] in self.heroes_mapping else '',
+                        'changes': ' '.join(
+                            changes if changes else ability_changes),
+                        'title': title,
                     })
 
         return hero_updates

@@ -3,6 +3,7 @@ from pinecone import ServerlessSpec
 from langchain.chains.query_constructor.schema import AttributeInfo
 from langchain.retrievers.self_query.base import SelfQueryRetriever
 import time
+import os
 
 
 class PineconeClient:
@@ -10,20 +11,20 @@ class PineconeClient:
         self.pinecone_client = pinecone_client
         self.embeddings_client = embeddings_client
         self.llm_client = llm_client
-        self.pinecone_index_name = "dota2-patches-rag"
+        self.pinecone_index_name = os.environ.get(
+            "PINECONE_INDEX_NAME", "dota2-patches-rag")
         self.embedding_dimensions = 1536
         self.pinecone_cloud = "aws"
         self.pinecone_region = "us-east-1"
 
     def insert(self, all_patch_documents):
-        if self.pinecone_index_name not in self.pinecone_client.list_indexes().names():
+        indexes = self.pinecone_client.list_indexes().names()
+        if self.pinecone_index_name not in indexes:
             print(f"Creating Pinecone index: {self.pinecone_index_name}")
             self.pinecone_client.create_index(
                 name=self.pinecone_index_name,
-                # Dimension of OpenAI's text-embedding-ada-002 or
-                # text-embedding-3-small
                 dimension=self.embedding_dimensions,
-                metric="cosine",      # Common metric for semantic similarity
+                metric="cosine",
                 spec=ServerlessSpec(
                     cloud="aws",
                     region="us-east-1"
@@ -32,7 +33,6 @@ class PineconeClient:
 
             print(f"Waiting for index '{
                   self.pinecone_index_name}' to become ready...")
-            # Use describe_index to poll for readiness status
             while not self.pinecone_client.describe_index(
                     self.pinecone_index_name).status['ready']:
                 time.sleep(1)
@@ -46,7 +46,8 @@ class PineconeClient:
             vector_store = LangchainPinecone.from_existing_index(
                 index_name=self.pinecone_index_name,
                 embedding=self.embeddings_client,
-                namespace="dota2-patches-v1"
+                namespace=os.environ.get(
+                    "PINECONE_INDEX_NAMESPACE", "dota2-patches-v1"),
             )
         except Exception as e:
             raise RuntimeError(f"Cannot connect to langchain index: {e}")
@@ -78,7 +79,8 @@ class PineconeClient:
             namespace="dota2-patches-v1",
         )
 
-        print("Successfully connected to existing Pinecone index via Langchain.")
+        print("Successfully connected to existing Pinecone index \
+            via Langchain.")
 
         return vector_store
 
@@ -86,27 +88,39 @@ class PineconeClient:
         metadata_field_info = [
             AttributeInfo(
                 name="patch_name",
-                description="The name of the patch. Formatted as <major version>.<minor version><patch version> e.g. 7.38c",
+                description="The name of the patch. Formatted as \
+                <major version>.<minor version><patch version> e.g. 7.38c",
                 type="string",
             ),
             AttributeInfo(
                 name="patch_number",
-                description="The official patch number, usually the same as patch_name.Formatted as <major version>.<minor version><patch version> e.g. 7.38c",
+                description="The official patch number, usually the same as \
+                patch_name.Formatted as <major version>.<minor version><patch \
+                version(optional)> e.g. 7.38c, 7.38. And so, asking for a \
+                patch encompasses those with and without patch version",
                 type="string",
             ),
             AttributeInfo(
                 name="skill_name",
-                description="(Optional) The name of the skill that is being patched. The format is \"<name of skill> (<code name>)\"",
+                description="(Optional) The name of the skill that is being \
+                patched. The format is \"<name of skill> (<code name>)\"",
                 type="string",
             ),
             AttributeInfo(
-                name="type", description="The type of the patch change. One of the following: ['heroes', 'items', 'generic']", type="string"
+                name="type", description="The type of the patch change. One \
+                of the following: ['heroes', 'items', 'generic']",
+                type="string"
             ),
             AttributeInfo(
-                name="subtype", description="The subtype of the patch change. The \"heroes\" type can be ['abilities', 'facets'] while the \"items\" type can be [\"hero_items\", \"neutral_items\"]", type="string"
+                name="subtype", description="The subtype of the patch change.\
+                The \"heroes\" type can be ['abilities', 'facets'] while the \
+                \"items\" type can be [\"hero_items\", \"neutral_items\"]",
+                type="string"
             ),
             AttributeInfo(
-                name="title", description="The name of the hero or item. The format is <hero or item name> (<code name>).", type="string"
+                name="title", description="The name of the hero or item. The \
+                format is <hero or item name> (<code name>).",
+                type="string"
             ),
         ]
 

@@ -9,14 +9,20 @@ class RetrievalChain:
 
     def get_qa_chain(self, retriever):
 
-        prompt_template_str = """You are a helpful assistant for answering questions related to Dota 2 patches. If the user asks for a patch update for a specific hero / item, you should mention all of the patch updates from the retrieved contexts.
+        prompt_template_str = """You are a helpful assistant for answering \
+        questions related to Dota 2 patches. If the user asks for a patch \
+        update for a specific hero / item, you should mention all of the \
+        patch updates from the retrieved contexts.
 
 Use the following pieces of retrieved context to answer the question.
 You must answer based **ONLY** on the provided context.
-If you don't know the answer or the context doesn't contain the answer, just say "I'm sorry, I cannot answer this question based on the provided patch notes."
+If you don't know the answer or the context doesn't contain the answer, just \
+say "I'm sorry, I cannot answer this question based on the provided patch \
+notes."
 Do not make up an answer or use any external knowledge.
 
-Include the patch from the metadata to the responses. If not known, no need to put the patch. Order the response based on patch from latest to earliest.
+Include the patch from the metadata to the responses. If not known, no need \
+to put the patch. Order the response based on patch from latest to earliest.
 
 CONTEXT:
 {context}

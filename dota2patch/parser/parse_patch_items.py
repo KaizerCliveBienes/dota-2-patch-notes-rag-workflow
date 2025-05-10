@@ -1,7 +1,3 @@
-import json
-from functools import reduce
-
-
 class ParsePatchItems:
     def __init__(self, item_raw_data):
         self.items_mapping = self.construct_item_mapping(item_raw_data)
@@ -17,10 +13,16 @@ class ParsePatchItems:
         if item_note['ability_id'] == -1:
             return None
 
+        changes = [
+            f"{note['note']}{
+                f'({note['info']})' if 'info' in note else ''}."
+            for note in item_note.get('ability_notes', [])
+        ]
+
         return {
             'patch_metadata': patch_metadata,
             'type': 'items',
             'subtype': item_subtype,
-            'changes': ' '.join(note['note'] + ('(' + note['info'] + ')' if 'info' in note else '') + '.' for note in item_note['ability_notes']),
-            'title': self.items_mapping[item_note['ability_id']] if item_note['ability_id'] in self.items_mapping else '',
+            'changes': ' '.join(changes),
+            'title': self.items_mapping.get(item_note['ability_id'], ''),
         }
